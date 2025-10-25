@@ -10,6 +10,10 @@ the new tags to 'new_tags.txt'.
 import subprocess
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 OLD_FILE = "old_tags.txt"
 NEW_FILE = "new_tags.txt"
@@ -28,7 +32,14 @@ def write_new_tags(file_path, tags):
         for tag in tags:
             f.write(tag + "\n")
 
+def check_user(image_name):
+    split_image = image_name.split("/")
+    if split_image[1].startswith("dssbpe"):
+        return "dssbpe"
+
+
 def main():
+    # subprocess.run(["docker", "login", f"-u={user}", f"-p={password}", "hub.tess.io"], check=True)
     # Read list of original image tags
     images = read_image_list(OLD_FILE)
     print(f"📦 Found {len(images)} image(s) to process")
@@ -41,6 +52,11 @@ def main():
 
         # Pull the image from Docker Hub (or registry)
         print("   🐳 Pulling image...")
+        if check_user(img) == "dssbpe":
+            user = os.getenv("dssbpe_uname")
+            password = os.getenv("dssbpe_password")
+            subprocess.run(["docker", "login", f"-u={user}", f"-p={password}", "hub.tess.io"], check=True)
+
         subprocess.run(["docker", "pull", img], check=True)
 
         # Split name and tag
@@ -64,5 +80,5 @@ def main():
     write_new_tags(NEW_FILE, new_tags)
     print(f"\n✅ All done! New tags saved to: {NEW_FILE}")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
